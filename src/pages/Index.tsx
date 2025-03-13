@@ -5,7 +5,6 @@ import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Briefcase, Users, Filter, Sparkles } from 'lucide-react';
 import { jobs } from '@/lib/data';
-import JobCard from '@/components/JobCard';
 import PremiumFeature from '@/components/PremiumFeature';
 import { ContainerScroll } from '@/components/ContainerScroll';
 
@@ -60,13 +59,6 @@ const Index = () => {
                 Find your next role
                 <ArrowRight size={18} className="ml-2" />
               </Button>
-              <Button 
-                variant="outline" 
-                className="h-14 px-8 rounded-xl text-base border-gray-300 hover:bg-secondary/50 transition-all duration-300"
-                onClick={() => navigate("/jobs")}
-              >
-                Explore job matches
-              </Button>
             </div>
 
             <div className="pt-16 flex flex-col items-center animate-fade-up" style={{ animationDelay: "300ms" }}>
@@ -82,10 +74,38 @@ const Index = () => {
           </div>
         }
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full p-4 md:p-8 overflow-y-auto">
+        <div className="flex flex-col gap-2 h-full p-4 md:py-8 md:px-4 overflow-y-auto">
           {featuredJobs.map((job) => (
-            <div key={job.id} className="animate-fade-up" style={{ animationDelay: `${featuredJobs.indexOf(job) * 100}ms` }}>
-              <JobCard job={job} />
+            <div 
+              key={job.id} 
+              className="flex flex-col sm:flex-row items-center p-4 rounded-xl bg-[#FEF7CD] hover:bg-[#FEF7CD]/80 cursor-pointer transition-colors duration-200 animate-fade-up"
+              style={{ animationDelay: `${featuredJobs.indexOf(job) * 100}ms` }}
+              onClick={() => navigate(`/job/${job.id}`)}
+            >
+              <div className="h-12 w-12 rounded-lg overflow-hidden flex-shrink-0 mr-4 bg-white flex items-center justify-center">
+                <img src={job.logo} alt={`${job.company} logo`} className="h-10 w-10 object-contain" />
+              </div>
+              
+              <div className="flex-grow">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between w-full">
+                  <div>
+                    <h3 className="font-medium text-gray-900">{job.title} • {job.company}</h3>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700 mt-1">
+                      <span>{job.position}</span>
+                      <span className="inline-block h-1 w-1 rounded-full bg-gray-500"></span>
+                      {job.type === "Remote" ? (
+                        <span>Worldwide</span>
+                      ) : (
+                        <span>{job.location}</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-2 sm:mt-0">
+                    <span className="text-sm font-medium text-gray-800">{job.salary}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           ))}
         </div>

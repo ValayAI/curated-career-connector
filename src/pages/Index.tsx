@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Briefcase, Users, Filter, Sparkles } from 'lucide-react';
+import { ArrowRight, Briefcase, Users, Filter, Sparkles, ExternalLink, MapPin } from 'lucide-react';
 import { jobs } from '@/lib/data';
 import PremiumFeature from '@/components/PremiumFeature';
 import { ContainerScroll } from '@/components/ContainerScroll';
@@ -127,7 +126,62 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             {featuredJobs.map((job) => (
               <div key={job.id} className="animate-fade-up" style={{ animationDelay: `${featuredJobs.indexOf(job) * 100}ms` }}>
-                <JobCard job={job} />
+                <div 
+                  className="relative border border-border/40 shadow-sm hover:shadow-md transition-all duration-300 bg-white hover:bg-white/80 cursor-pointer group overflow-hidden"
+                  onClick={() => navigate(`/job/${job.id}`)}
+                >
+                  {job.featured && (
+                    <div className="absolute top-0 left-0 w-full h-1 bg-primary" />
+                  )}
+                  
+                  {job.connection && job.connection.type && (
+                    <div className="absolute top-4 right-4">
+                      <div className={`bg-${job.connection.type === 'First' ? 'green' : job.connection.type === 'Second' ? 'blue' : 'purple'}-50 text-${job.connection.type === 'First' ? 'green' : job.connection.type === 'Second' ? 'blue' : 'purple'}-600 border-${job.connection.type === 'First' ? 'green' : job.connection.type === 'Second' ? 'blue' : 'purple'}-200 px-2 py-1 rounded-full text-xs font-medium flex items-center`}>
+                        <Users size={12} className="mr-1" />
+                        {job.connection.type === 'First' ? '1st' : job.connection.type === 'Second' ? '2nd' : 'Alumni'} Connection
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="h-16 w-16 rounded-lg overflow-hidden bg-secondary flex items-center justify-center border border-border/40">
+                        <img src={job.logo} alt={`${job.company} logo`} className="h-full w-full object-cover" />
+                      </div>
+                      
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors duration-200">{job.title}</h3>
+                        <p className="text-muted-foreground">{job.company}</p>
+                        
+                        <div className="mt-3 grid grid-cols-2 gap-y-2">
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <Briefcase size={14} className="mr-1.5" />
+                            <span>{job.position}</span>
+                          </div>
+                          
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <ArrowRight size={14} className="mr-1.5" />
+                            <span>{job.location}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t border-border/30">
+                      <div className="flex justify-between items-center">
+                        <div className="text-sm">
+                          <span className="font-medium">{job.applicationRate}%</span>
+                          <span className="text-muted-foreground ml-1">response rate</span>
+                        </div>
+                        
+                        <div className="flex items-center text-primary font-medium text-sm group-hover:underline">
+                          View Details
+                          <ExternalLink size={14} className="ml-1" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>

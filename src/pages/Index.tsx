@@ -2,12 +2,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
-import HeroSection from '@/components/HeroSection';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Briefcase, Users, Filter, Sparkles } from 'lucide-react';
 import { jobs } from '@/lib/data';
 import JobCard from '@/components/JobCard';
 import PremiumFeature from '@/components/PremiumFeature';
+import { ContainerScroll } from '@/components/ContainerScroll';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -17,7 +17,79 @@ const Index = () => {
     <div className="min-h-screen">
       <Navbar />
       
-      <HeroSection />
+      <ContainerScroll
+        titleComponent={
+          <div className="flex flex-col items-center text-center max-w-4xl mx-auto space-y-8">
+            <div className="inline-flex items-center px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4 animate-fade-down">
+              <span className="relative flex h-2 w-2 mr-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              AI-powered job connections for PM professionals
+            </div>
+
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight md:leading-tight animate-fade-up">
+              Transform your job search with high-quality{" "}
+              <span className="text-primary relative">
+                warm leads
+                <svg
+                  className="absolute -bottom-1 left-0 w-full h-[8px] text-primary/30"
+                  viewBox="0 0 300 8"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M1 5.5C67 1.5 179 1.5 299 5.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </span>
+            </h1>
+
+            <p className="text-lg md:text-xl text-foreground/80 max-w-3xl mx-auto animate-fade-up" style={{ animationDelay: "100ms" }}>
+              Intelligent matching for Product, Project, Program Managers, and Business Analysts. Focus on opportunities where you have a connection advantage.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 mt-8 w-full max-w-xl mx-auto animate-fade-up" style={{ animationDelay: "200ms" }}>
+              <Button 
+                onClick={() => navigate("/jobs")}
+                className="h-14 px-8 rounded-xl text-base bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Find your next role
+                <ArrowRight size={18} className="ml-2" />
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-14 px-8 rounded-xl text-base border-gray-300 hover:bg-secondary/50 transition-all duration-300"
+                onClick={() => navigate("/jobs")}
+              >
+                Explore job matches
+              </Button>
+            </div>
+
+            <div className="pt-16 flex flex-col items-center animate-fade-up" style={{ animationDelay: "300ms" }}>
+              <p className="text-sm font-medium text-foreground/60 mb-6">TRUSTED BY PROFESSIONALS FROM</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-8 justify-items-center items-center">
+                {['Google', 'Microsoft', 'Amazon', 'Meta', 'Apple', 'LinkedIn'].map((company) => (
+                  <div key={company} className="text-foreground/40 font-semibold text-lg">
+                    {company}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        }
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full p-4 md:p-8 overflow-y-auto">
+          {featuredJobs.map((job) => (
+            <div key={job.id} className="animate-fade-up" style={{ animationDelay: `${featuredJobs.indexOf(job) * 100}ms` }}>
+              <JobCard job={job} />
+            </div>
+          ))}
+        </div>
+      </ContainerScroll>
       
       <section className="py-24 bg-gradient-to-b from-background to-secondary/20">
         <div className="container px-4 md:px-6">

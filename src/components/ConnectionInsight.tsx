@@ -35,7 +35,7 @@ const ConnectionInsight: React.FC<ConnectionInsightProps> = ({ job }) => {
         <Badge connection={job.connection.type} />
       </div>
       
-      {job.connection.type !== "None" && job.connection.name && (
+      {job.connection.name && (
         <div className="flex items-start gap-4 mb-6">
           <div className="h-12 w-12 rounded-full bg-secondary flex items-center justify-center text-muted-foreground shrink-0">
             <User size={24} />

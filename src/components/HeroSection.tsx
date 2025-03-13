@@ -1,9 +1,9 @@
 
 import React from "react";
-import { motion } from "framer-motion";
 import { Search, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const HeroSection = () => {
   const navigate = useNavigate();

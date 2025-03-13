@@ -3,7 +3,7 @@ import React from "react";
 import { User, Building, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Job } from "@/lib/types";
+import { Job, ConnectionStrength } from "@/lib/types";
 
 interface ConnectionInsightProps {
   job: Job;
@@ -77,7 +77,7 @@ const ConnectionInsight: React.FC<ConnectionInsightProps> = ({ job }) => {
 };
 
 interface BadgeProps {
-  connection: string;
+  connection: ConnectionStrength;
 }
 
 const Badge: React.FC<BadgeProps> = ({ connection }) => {

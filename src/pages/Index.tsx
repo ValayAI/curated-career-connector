@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -50,7 +51,7 @@ const Index = () => {
               Intelligent matching for Product, Project, Program Managers, and Business Analysts. Focus on opportunities where you have a connection advantage.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 mt-8 w-full max-w-xl mx-auto animate-fade-up" style={{ animationDelay: "200ms" }}>
+            <div className="flex justify-center mt-8 w-full animate-fade-up" style={{ animationDelay: "200ms" }}>
               <Button 
                 onClick={() => navigate("/jobs")}
                 className="h-14 px-8 rounded-xl text-base bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98]"

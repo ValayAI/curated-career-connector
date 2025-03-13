@@ -1,13 +1,23 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Search, BriefcaseIcon, User } from "lucide-react";
+import { Search, BriefcaseIcon, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const isHome = location.pathname === "/";
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -69,10 +79,42 @@ const Navbar = () => {
               <Search size={16} className="mr-2" />
               Search
             </Button>
-            <Button variant="default" size="sm" className="rounded-full px-4">
-              <User size={16} className="mr-2" />
-              Sign In
-            </Button>
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="default" size="sm" className="rounded-full px-4">
+                    <User size={16} className="mr-2" />
+                    Account
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>
+                    <Link to="/profile" className="flex w-full">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link to="/saved-jobs" className="flex w-full">Saved Jobs</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    <LogOut size={16} className="mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="rounded-full px-4"
+                onClick={() => location.pathname !== '/auth' && window.location.assign('/auth')}
+              >
+                <User size={16} className="mr-2" />
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
 

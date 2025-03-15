@@ -1,9 +1,9 @@
-
 export type JobPosition = 
   | 'Product Manager'
   | 'Project Manager'
   | 'Program Manager'
-  | 'Business Analyst';
+  | 'Business Analyst'
+  | 'Data Analyst';
 
 export type Experience = 
   | 'Entry Level'
@@ -60,5 +60,5 @@ export interface Filter {
   connectionStrength: ConnectionStrength[];
   minRecruiterActivity?: number;
   minApplicationRate?: number;
-  location?: string; // Added location property
+  location?: string;
 }

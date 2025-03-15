@@ -45,9 +45,9 @@ Deno.serve(async (req) => {
       queryParams.append('num_pages', '1');
       queryParams.append('date_posted', 'today');
       
-      if (keywords) {
-        queryParams.append('query', keywords);
-      }
+      // IMPORTANT FIX: Always provide a default query if none is provided
+      const queryTerm = keywords || 'all jobs';
+      queryParams.append('query', queryTerm);
       
       if (location) {
         queryParams.append('location', location);

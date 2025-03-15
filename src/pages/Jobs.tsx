@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import JobCard from "@/components/JobCard";
 import JobFilter from "@/components/JobFilter";
-import { Filter, Job } from "@/lib/types";
+import { Filter, Job, ConnectionStrength } from "@/lib/types";
 import { filterJobs } from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Briefcase, Loader2 } from "lucide-react";
@@ -54,7 +54,7 @@ const Jobs = () => {
           featured: job.featured || Math.random() > 0.7, // Randomly set some jobs as featured
           applicationRate: job.applicationRate || Math.floor(Math.random() * 40) + 50, // Random application rate between 50-90%
           connection: job.connection || { 
-            type: ['None', 'Second', 'First', 'Alumni'][Math.floor(Math.random() * 4)] 
+            type: ['None', 'Second', 'First', 'Alumni'][Math.floor(Math.random() * 4)] as ConnectionStrength
           }
         }));
 
@@ -111,14 +111,16 @@ const Jobs = () => {
               }
             }
           } else if (key === 'connectionStrength' && Array.isArray(value) && value.length > 0) {
-            // Handle connection type filter
-            if (!value.includes(job.connection.type)) {
+            // Handle connection type filter - Fix for TypeScript error on line 115
+            if (!value.includes(job.connection.type as any)) {
               matches = false;
             }
           } else if (Array.isArray(value) && value.length > 0) {
             // Handle array filters (position, experience, industry, type)
             const jobValue = job[key as keyof Job];
-            if (jobValue && !value.includes(jobValue as any)) {
+            // Fix for TypeScript error on line 121 - proper type cast
+            const typedValue = value as Array<string>;
+            if (jobValue && !typedValue.includes(jobValue as string)) {
               matches = false;
             }
           }

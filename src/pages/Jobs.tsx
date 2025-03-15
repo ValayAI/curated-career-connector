@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import JobCard from "@/components/JobCard";
@@ -26,17 +27,16 @@ const Jobs = () => {
   const [hasMore, setHasMore] = useState(true);
   const [apiSource, setApiSource] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [selectedPosition, setSelectedPosition] = useState<JobPosition>('Product Manager');
 
-  const fetchJobs = async (pageNum = 1) => {
+  const fetchJobs = async (pageNum = 1, position = selectedPosition) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const response = await supabase.functions.invoke('linkedin-jobs', {
+      const response = await supabase.functions.invoke('job-scraper', {
         body: {
-          page: pageNum,
-          limit: 10,
-          keywords: activeFilter.position?.join(','),
+          position: position,
           location: activeFilter.location || '',
         }
       });
@@ -76,7 +76,7 @@ const Jobs = () => {
             responsibilities: job.responsibilities || ["Responsibility information not available"],
             requirements: job.requirements || ["Requirement information not available"],
             recruiterActivity: job.recruiterActivity || Math.floor(Math.random() * 10) + 1,
-            position: job.position || 'Product Manager',
+            position: job.position || position,
           }))
           .filter((job: Job) => ALLOWED_POSITIONS.includes(job.position));
 
@@ -109,7 +109,7 @@ const Jobs = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [selectedPosition]);
 
   const handleFilterChange = (filter: Partial<Filter>) => {
     setActiveFilter(filter);
@@ -156,6 +156,12 @@ const Jobs = () => {
     fetchJobs(nextPage);
   };
 
+  const handlePositionChange = (position: JobPosition) => {
+    setSelectedPosition(position);
+    setPage(1);
+    fetchJobs(1, position);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -190,10 +196,29 @@ const Jobs = () => {
             )}
           </div>
           
+          <div className="mb-8 animate-fade-up">
+            <div className="bg-white border border-gray-200 shadow-sm rounded-xl p-4">
+              <h2 className="font-medium text-lg mb-3">Select Job Position</h2>
+              <div className="flex flex-wrap gap-2">
+                {ALLOWED_POSITIONS.map((position) => (
+                  <Button
+                    key={position}
+                    variant={selectedPosition === position ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handlePositionChange(position)}
+                    className="transition-all"
+                  >
+                    {position}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+          
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-1 animate-fade-in">
               <div className="sticky top-20">
-                <JobFilter onFilterChange={setActiveFilter} />
+                <JobFilter onFilterChange={handleFilterChange} />
               </div>
             </div>
             
@@ -220,7 +245,7 @@ const Jobs = () => {
                 <div className="bg-white border border-gray-200 rounded-xl p-12 text-center animate-fade-up">
                   <Loader2 size={40} className="mx-auto text-primary mb-4 animate-spin" />
                   <h3 className="text-xl font-medium mb-2">Loading jobs...</h3>
-                  <p className="text-muted-foreground">Fetching the latest opportunities from LinkedIn</p>
+                  <p className="text-muted-foreground">Fetching the latest {selectedPosition} positions</p>
                 </div>
               ) : (
                 <div className="space-y-4">

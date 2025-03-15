@@ -23,10 +23,11 @@ const Jobs = () => {
     setIsLoading(true);
     
     try {
+      // Fix: Using proper parameters for function invocation
       const response = await supabase.functions.invoke('linkedin-jobs', {
-        query: {
-          page: pageNum.toString(),
-          limit: '10',
+        body: {
+          page: pageNum,
+          limit: 10,
           keywords: activeFilter.position?.join(','),
           location: '',
         }
@@ -100,13 +101,24 @@ const Jobs = () => {
         let matches = true;
         
         Object.entries(filter).forEach(([key, value]) => {
-          if (value && Array.isArray(value) && value.length > 0) {
-            // Handle array filters
-            if (!value.includes(job[key as keyof Job])) {
+          // Fix: Properly type check values before accessing array methods
+          if (key === 'minRecruiterActivity' || key === 'minApplicationRate') {
+            // Handle numeric filters
+            if (typeof value === 'number' && value > 0) {
+              const jobValue = job[key.replace('min', '') as keyof Job];
+              if (typeof jobValue === 'number' && jobValue < value) {
+                matches = false;
+              }
+            }
+          } else if (key === 'connectionStrength' && Array.isArray(value) && value.length > 0) {
+            // Handle connection type filter
+            if (!value.includes(job.connection.type)) {
               matches = false;
             }
-          } else if (key === 'connectionStrength' && value.length > 0) {
-            if (!value.includes(job.connection.type)) {
+          } else if (Array.isArray(value) && value.length > 0) {
+            // Handle array filters (position, experience, industry, type)
+            const jobValue = job[key as keyof Job];
+            if (jobValue && !value.includes(jobValue as any)) {
               matches = false;
             }
           }

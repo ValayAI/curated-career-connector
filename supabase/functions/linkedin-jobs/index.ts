@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { corsHeaders } from '../_shared/cors.ts'
 
@@ -22,13 +21,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Get request parameters
-    const url = new URL(req.url)
-    const keywords = url.searchParams.get('keywords') || ''
-    const location = url.searchParams.get('location') || ''
-    const page = parseInt(url.searchParams.get('page') || '1')
-    const limit = parseInt(url.searchParams.get('limit') || '10')
-
+    // Get request parameters from the body instead of URL query parameters
+    const { page = 1, limit = 10, keywords = '', location = '' } = await req.json()
+    
     // First, get access token from LinkedIn
     const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
       method: 'POST',

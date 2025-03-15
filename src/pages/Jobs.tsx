@@ -20,7 +20,7 @@ const Jobs = () => {
   const [apiSource, setApiSource] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch jobs from RapidAPI
+  // Fetch jobs from RapidAPI JSearch
   const fetchJobs = async (pageNum = 1) => {
     setIsLoading(true);
     setError(null);
@@ -31,7 +31,7 @@ const Jobs = () => {
           page: pageNum,
           limit: 10,
           keywords: activeFilter.position?.join(','),
-          location: '',
+          location: activeFilter.location || '',
         }
       });
 

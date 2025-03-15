@@ -1,7 +1,7 @@
 
 import { corsHeaders } from '../_shared/cors.ts'
 
-// This endpoint allows us to fetch job listings from the RapidAPI LinkedIn Job Search API
+// This endpoint allows us to fetch job listings from the RapidAPI JSearch API
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
@@ -32,40 +32,41 @@ Deno.serve(async (req) => {
     }
 
     try {
-      console.log('Attempting to fetch jobs from RapidAPI LinkedIn job search API')
+      console.log('Attempting to fetch jobs from RapidAPI JSearch API')
       
-      // Prepare query parameters
-      let endpoint = "/api/job/search" // Updated to correct endpoint structure
+      // Prepare query parameters - using correct JSearch endpoint structure
+      const endpoint = "/search";
       
-      // Add query parameters for job filtering (when available)
+      // Add query parameters for job filtering
       const queryParams = new URLSearchParams();
       
+      // JSearch API parameters
       queryParams.append('page', page.toString());
-      queryParams.append('per_page', limit.toString()); // Added per_page parameter
+      queryParams.append('num_pages', '1');
+      queryParams.append('date_posted', 'today');
       
       if (keywords) {
-        queryParams.append('search', keywords);
+        queryParams.append('query', keywords);
       }
       
       if (location) {
         queryParams.append('location', location);
       }
       
-      // Always add these parameters for better results
-      queryParams.append('job_type', 'full_time');
-      queryParams.append('sort_by', 'recent');
+      // Add employment type filter parameter
+      queryParams.append('employment_types', 'FULLTIME');
       
       // Append query parameters to endpoint
       const queryString = queryParams.toString();
-      endpoint = `${endpoint}?${queryString}`;
+      const fullEndpoint = `${endpoint}?${queryString}`;
       
-      console.log(`Making request to RapidAPI: ${endpoint}`);
+      console.log(`Making request to JSearch API: ${fullEndpoint}`);
       
       // Make request to RapidAPI
-      const response = await fetch(`https://jsearch.p.rapidapi.com${endpoint}`, {
+      const response = await fetch(`https://jsearch.p.rapidapi.com${fullEndpoint}`, {
         headers: {
           'X-RapidAPI-Key': RAPIDAPI_KEY,
-          'X-RapidAPI-Host': 'jsearch.p.rapidapi.com' // Updated to correct host
+          'X-RapidAPI-Host': 'jsearch.p.rapidapi.com'
         }
       });
 
@@ -146,7 +147,7 @@ function transformRapidApiData(apiData: any[], limit = 10) {
       id: job.job_id || `rapid-${index + 1}`.padStart(10, '0'),
       title: job.job_title || 'Job Title Not Available',
       company: job.employer_name || 'Company Not Available',
-      location: job.job_city ? `${job.job_city}, ${job.job_state || job.job_country || ''}` : 'Remote',
+      location: job.job_city ? `${job.job_city}, ${job.job_state || job.job_country || ''}` : (job.job_country || 'Remote'),
       type: job.job_is_remote ? "Remote" : ["Onsite", "Hybrid"][Math.floor(Math.random() * 2)],
       salary: job.job_min_salary && job.job_max_salary 
              ? `$${job.job_min_salary}-$${job.job_max_salary} ${job.job_salary_currency || 'USD'}`

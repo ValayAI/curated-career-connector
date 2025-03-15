@@ -60,4 +60,5 @@ export interface Filter {
   connectionStrength: ConnectionStrength[];
   minRecruiterActivity?: number;
   minApplicationRate?: number;
+  location?: string; // Added location property
 }

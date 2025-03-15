@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Filter, Experience, Industry, JobPosition, ConnectionStrength } from "@/lib/types";
 import { Slider } from "@/components/ui/slider";
@@ -20,9 +19,11 @@ const JobFilter: React.FC<JobFilterProps> = ({ onFilterChange }) => {
     connectionStrength: [],
     minRecruiterActivity: 0,
     minApplicationRate: 0,
+    location: "",
   });
 
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+  const [locationInput, setLocationInput] = useState("");
 
   const positions: JobPosition[] = [
     "Product Manager",
@@ -120,6 +121,20 @@ const JobFilter: React.FC<JobFilterProps> = ({ onFilterChange }) => {
     setFilter((prev) => ({ ...prev, minApplicationRate: value[0] }));
   };
 
+  const handleLocationInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocationInput(e.target.value);
+  };
+
+  const handleLocationSearch = () => {
+    setFilter((prev) => ({ ...prev, location: locationInput }));
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleLocationSearch();
+    }
+  };
+
   const handleApplyFilter = () => {
     onFilterChange(filter);
   };
@@ -133,7 +148,9 @@ const JobFilter: React.FC<JobFilterProps> = ({ onFilterChange }) => {
       connectionStrength: [],
       minRecruiterActivity: 0,
       minApplicationRate: 0,
+      location: "",
     });
+    setLocationInput("");
     onFilterChange({});
   };
   
@@ -185,6 +202,36 @@ const JobFilter: React.FC<JobFilterProps> = ({ onFilterChange }) => {
       
       <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isFilterExpanded ? 'max-h-[1500px]' : 'max-h-0'}`}>
         <div className="p-4 grid gap-6">
+          <div>
+            <h4 className="text-sm font-medium mb-3">Location</h4>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Enter location..."
+                value={locationInput}
+                onChange={handleLocationInputChange}
+                onKeyPress={handleKeyPress}
+                className="bg-muted/30 w-full rounded-lg border border-input px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
+              {filter.location && (
+                <div className="mt-2 flex items-center">
+                  <span className="bg-primary/10 text-primary text-xs rounded-full px-2 py-1">
+                    {filter.location}
+                    <button 
+                      onClick={() => {
+                        setFilter(prev => ({ ...prev, location: "" }));
+                        setLocationInput("");
+                      }}
+                      className="ml-1 hover:text-destructive"
+                    >
+                      ×
+                    </button>
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          
           <div>
             <h4 className="text-sm font-medium mb-3">Role</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -330,9 +377,15 @@ const JobFilter: React.FC<JobFilterProps> = ({ onFilterChange }) => {
           <input
             type="text"
             placeholder="Search jobs..."
+            value={locationInput}
+            onChange={handleLocationInputChange}
+            onKeyPress={handleKeyPress}
             className="bg-muted/30 w-full rounded-lg border border-input px-10 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
-          <Button className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 rounded-md">
+          <Button 
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 rounded-md"
+            onClick={handleLocationSearch}
+          >
             <ArrowRight size={14} />
           </Button>
         </div>

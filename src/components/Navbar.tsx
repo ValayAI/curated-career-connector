@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Search, BriefcaseIcon, User, LogOut } from "lucide-react";
+import { Search, BriefcaseIcon, User, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -17,7 +17,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const isHome = location.pathname === "/";
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -72,6 +72,15 @@ const Navbar = () => {
             >
               How It Works
             </Link>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors duration-200 flex items-center"
+              >
+                <Shield size={16} className="mr-1 text-primary" />
+                Admin
+              </Link>
+            )}
           </nav>
 
           <div className="flex items-center space-x-3">
@@ -97,6 +106,17 @@ const Navbar = () => {
                   <DropdownMenuItem>
                     <Link to="/saved-jobs" className="flex w-full">Saved Jobs</Link>
                   </DropdownMenuItem>
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>
+                        <Link to="/admin" className="flex w-full items-center">
+                          <Shield size={16} className="mr-2 text-primary" />
+                          Admin Dashboard
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut size={16} className="mr-2" />

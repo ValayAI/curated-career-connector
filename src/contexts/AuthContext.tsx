@@ -9,6 +9,7 @@ interface AuthContextProps {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -22,14 +23,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Check if user is admin
+  const checkAdminStatus = async (userId: string) => {
+    if (!userId) return false;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .single();
+      
+    if (error) {
+      console.error("Error checking admin status:", error);
+      return false;
+    }
+    
+    return data?.is_admin || false;
+  };
 
   useEffect(() => {
     // Set up the session listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user || null);
+      
+      if (newSession?.user) {
+        checkAdminStatus(newSession.user.id).then(setIsAdmin);
+      } else {
+        setIsAdmin(false);
+      }
+      
       setLoading(false);
 
       if (event === 'SIGNED_IN') {
@@ -46,6 +73,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
       setUser(data.session?.user || null);
+      
+      if (data.session?.user) {
+        const adminStatus = await checkAdminStatus(data.session.user.id);
+        setIsAdmin(adminStatus);
+      }
+      
       setLoading(false);
     };
     
@@ -104,6 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       session, 
       user, 
       loading, 
+      isAdmin,
       signIn, 
       signUp, 
       signOut, 

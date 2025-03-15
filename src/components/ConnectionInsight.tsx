@@ -3,6 +3,7 @@ import React from "react";
 import { User, Building, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge as UIBadge } from "@/components/ui/badge";
 import { Job, ConnectionStrength } from "@/lib/types";
 
 interface ConnectionInsightProps {

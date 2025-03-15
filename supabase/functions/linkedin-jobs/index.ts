@@ -1,6 +1,6 @@
 import { corsHeaders } from '../_shared/cors.ts'
 
-// This endpoint allows us to fetch job listings from LinkedIn and RapidAPI
+// This endpoint allows us to fetch job listings from the RapidAPI LinkedIn Job Search API
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
       // Return sample data if credentials are missing
       return new Response(
         JSON.stringify({
-          message: 'Using sample data as RapidAPI key is not configured',
+          message: 'Using sample data (RapidAPI key not configured)',
           data: getSampleJobs(limit, keywords)
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     }
 
     try {
-      console.log('Attempting to fetch jobs from RapidAPI LinkedIn job search')
+      console.log('Attempting to fetch jobs from RapidAPI LinkedIn job search API')
       
       // Prepare query parameters
       let endpoint = "/active-jb-24h"
@@ -70,8 +70,9 @@ Deno.serve(async (req) => {
       });
 
       if (!response.ok) {
-        console.error(`RapidAPI request failed with status ${response.status}: ${await response.text()}`);
-        throw new Error(`RapidAPI request failed with status ${response.status}`);
+        const errorText = await response.text();
+        console.error(`RapidAPI request failed with status ${response.status}: ${errorText}`);
+        throw new Error(`RapidAPI request failed with status ${response.status}: ${errorText}`);
       }
       
       const rapidApiData = await response.json();
@@ -87,7 +88,7 @@ Deno.serve(async (req) => {
       
       return new Response(
         JSON.stringify({
-          message: 'Using live data from RapidAPI',
+          message: 'Using data from RapidAPI LinkedIn Job Search API',
           data: transformedJobs
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -97,7 +98,7 @@ Deno.serve(async (req) => {
       // Fall back to sample data on API error
       return new Response(
         JSON.stringify({
-          message: 'Error with RapidAPI, using sample data instead',
+          message: 'Error with RapidAPI LinkedIn Job Search API, using sample data instead',
           data: getSampleJobs(limit, keywords),
           error: apiError.message
         }),
@@ -105,19 +106,20 @@ Deno.serve(async (req) => {
       );
     }
   } catch (error) {
-    console.error('Error in LinkedIn jobs function:', error)
+    console.error('Error in jobs function:', error)
     
     return new Response(
       JSON.stringify({
         message: 'Error occurred, using sample data',
-        data: getSampleJobs(10) // Return sample data even on error
+        data: getSampleJobs(10), // Return sample data even on error
+        error: error.message
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 } // Return 200 instead of 500
     )
   }
 })
 
-// Transform RapidAPI LinkedIn data to match our job data structure
+// Transform RapidAPI LinkedIn job search data to match our job data structure
 function transformRapidApiData(apiData: any[], limit = 10) {
   // Handle empty or invalid data
   if (!apiData || !Array.isArray(apiData) || apiData.length === 0) {
@@ -166,7 +168,7 @@ function transformRapidApiData(apiData: any[], limit = 10) {
   });
 }
 
-// Sample jobs data function to use when LinkedIn API is not available
+// Sample jobs data function to use when RapidAPI is not available
 function getSampleJobs(limit = 10, keywordFilter = '') {
   const sampleJobs = [
     {

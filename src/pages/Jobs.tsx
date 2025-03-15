@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import JobCard from "@/components/JobCard";
@@ -19,7 +20,7 @@ const Jobs = () => {
   const [apiSource, setApiSource] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch jobs from LinkedIn API
+  // Fetch jobs from RapidAPI
   const fetchJobs = async (pageNum = 1) => {
     setIsLoading(true);
     setError(null);
@@ -35,9 +36,9 @@ const Jobs = () => {
       });
 
       if (response.error) {
-        console.error('Error fetching jobs:', response.error);
+        console.error('Error invoking edge function:', response.error);
         toast.error('Failed to load jobs. Using sample data instead.');
-        setError('API Error: ' + response.error.message);
+        setError('Edge Function Error: ' + response.error.message);
         
         // If we can't get jobs from the API, use the local sample data
         const localFilteredJobs = filterJobs(activeFilter);
@@ -46,7 +47,7 @@ const Jobs = () => {
           setFilteredJobs(localFilteredJobs);
         }
         setHasMore(false);
-        setApiSource('Local sample data');
+        setApiSource('Local sample data (edge function error)');
       } else {
         const responseData = response.data;
         const jobsData = responseData.data || [];
@@ -178,7 +179,13 @@ const Jobs = () => {
                 {error && (
                   <div className="ml-2 flex items-center text-destructive">
                     <AlertCircle size={12} className="mr-1" />
-                    <span className="text-xs truncate max-w-[300px]" title={error}>Error detected</span>
+                    <button 
+                      className="text-xs underline hover:no-underline truncate max-w-[300px]" 
+                      title={error}
+                      onClick={() => toast.error(error || "Unknown error")}
+                    >
+                      Error detected (click for details)
+                    </button>
                   </div>
                 )}
               </div>

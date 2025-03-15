@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import JobCard from "@/components/JobCard";
@@ -23,7 +22,6 @@ const Jobs = () => {
     setIsLoading(true);
     
     try {
-      // Fix: Using proper parameters for function invocation
       const response = await supabase.functions.invoke('linkedin-jobs', {
         body: {
           page: pageNum,
@@ -111,7 +109,7 @@ const Jobs = () => {
               }
             }
           } else if (key === 'connectionStrength' && Array.isArray(value) && value.length > 0) {
-            // Handle connection type filter - Fix for TypeScript error on line 115
+            // Handle connection type filter - Fix for TypeScript error
             const connectionStrengths = value as ConnectionStrength[]; // Explicitly cast to ConnectionStrength array
             if (!connectionStrengths.includes(job.connection.type)) {
               matches = false;
@@ -120,7 +118,7 @@ const Jobs = () => {
             // Handle array filters (position, experience, industry, type)
             const jobValue = job[key as keyof Job];
             // Fix for TypeScript error - proper type cast
-            const typedValue = value as Array<string>;
+            const typedValue = value as string[];
             if (jobValue && !typedValue.includes(jobValue as string)) {
               matches = false;
             }

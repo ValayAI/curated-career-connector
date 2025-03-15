@@ -31,18 +31,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkAdminStatus = async (userId: string) => {
     if (!userId) return false;
     
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', userId)
+        .single();
+        
+      if (error) {
+        console.error("Error checking admin status:", error);
+        return false;
+      }
       
-    if (error) {
-      console.error("Error checking admin status:", error);
+      return data?.is_admin || false;
+    } catch (err) {
+      console.error("Exception checking admin status:", err);
       return false;
     }
-    
-    return data?.is_admin || false;
   };
 
   useEffect(() => {

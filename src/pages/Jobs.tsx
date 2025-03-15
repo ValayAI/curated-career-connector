@@ -4,17 +4,125 @@ import Navbar from "@/components/Navbar";
 import JobCard from "@/components/JobCard";
 import JobFilter from "@/components/JobFilter";
 import { Filter, Job } from "@/lib/types";
-import { jobs, filterJobs } from "@/lib/data";
+import { filterJobs } from "@/lib/data";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Briefcase } from "lucide-react";
+import { ArrowRight, Briefcase, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Jobs = () => {
-  const [filteredJobs, setFilteredJobs] = useState<Job[]>(jobs);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [activeFilter, setActiveFilter] = useState<Partial<Filter>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Fetch jobs from LinkedIn API
+  const fetchJobs = async (pageNum = 1) => {
+    setIsLoading(true);
+    
+    try {
+      const response = await supabase.functions.invoke('linkedin-jobs', {
+        query: {
+          page: pageNum.toString(),
+          limit: '10',
+          keywords: activeFilter.position?.join(','),
+          location: '',
+        }
+      });
+
+      if (response.error) {
+        console.error('Error fetching jobs:', response.error);
+        toast.error('Failed to load jobs. Using sample data instead.');
+        // If we can't get jobs from the API, use the local sample data
+        const localFilteredJobs = filterJobs(activeFilter);
+        if (pageNum === 1) {
+          setJobs(localFilteredJobs);
+          setFilteredJobs(localFilteredJobs);
+        }
+        setHasMore(false);
+      } else {
+        const jobsData = response.data.data || [];
+        
+        // Format the data to match our Job type
+        const formattedJobs = jobsData.map((job: any) => ({
+          ...job,
+          // Ensure all required properties are present
+          id: job.id || `job-${Math.random().toString(36).substr(2, 9)}`,
+          featured: job.featured || Math.random() > 0.7, // Randomly set some jobs as featured
+          applicationRate: job.applicationRate || Math.floor(Math.random() * 40) + 50, // Random application rate between 50-90%
+          connection: job.connection || { 
+            type: ['None', 'Second', 'First', 'Alumni'][Math.floor(Math.random() * 4)] 
+          }
+        }));
+
+        if (pageNum === 1) {
+          setJobs(formattedJobs);
+          setFilteredJobs(formattedJobs);
+        } else {
+          setJobs(prev => [...prev, ...formattedJobs]);
+          setFilteredJobs(prev => [...prev, ...formattedJobs]);
+        }
+        
+        setHasMore(formattedJobs.length >= 10); // If we get fewer than 10 jobs, assume there are no more
+      }
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+      toast.error('Failed to load jobs');
+      // If we can't get jobs from the API, use the local sample data
+      const localFilteredJobs = filterJobs(activeFilter);
+      if (pageNum === 1) {
+        setJobs(localFilteredJobs);
+        setFilteredJobs(localFilteredJobs);
+      }
+      setHasMore(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
 
   const handleFilterChange = (filter: Partial<Filter>) => {
     setActiveFilter(filter);
-    setFilteredJobs(filterJobs(filter));
+    // Reset pagination when filter changes
+    setPage(1);
+    
+    // Apply filters on the client-side for now
+    // In a production app, we would make a new API call with the updated filters
+    if (Object.keys(filter).length === 0) {
+      setFilteredJobs(jobs);
+    } else {
+      const filtered = jobs.filter(job => {
+        let matches = true;
+        
+        Object.entries(filter).forEach(([key, value]) => {
+          if (value && Array.isArray(value) && value.length > 0) {
+            // Handle array filters
+            if (!value.includes(job[key as keyof Job])) {
+              matches = false;
+            }
+          } else if (key === 'connectionStrength' && value.length > 0) {
+            if (!value.includes(job.connection.type)) {
+              matches = false;
+            }
+          }
+        });
+        
+        return matches;
+      });
+      
+      setFilteredJobs(filtered);
+    }
+  };
+
+  const loadMoreJobs = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchJobs(nextPage);
   };
 
   return (
@@ -60,30 +168,52 @@ const Jobs = () => {
                 </div>
               </div>
               
-              <div className="space-y-4">
-                {filteredJobs.length === 0 ? (
-                  <div className="bg-white border border-gray-200 rounded-xl p-12 text-center animate-fade-up">
-                    <Briefcase size={40} className="mx-auto text-muted-foreground mb-4" />
-                    <h3 className="text-xl font-medium mb-2">No jobs found</h3>
-                    <p className="text-muted-foreground mb-6">Try adjusting your filters to see more results.</p>
-                    <Button onClick={() => handleFilterChange({})}>
-                      Reset Filters
-                    </Button>
-                  </div>
-                ) : (
-                  filteredJobs.map((job, index) => (
-                    <div key={job.id} className="animate-fade-up" style={{ animationDelay: `${index * 50}ms` }}>
-                      <JobCard job={job} />
+              {isLoading && page === 1 ? (
+                <div className="bg-white border border-gray-200 rounded-xl p-12 text-center animate-fade-up">
+                  <Loader2 size={40} className="mx-auto text-primary mb-4 animate-spin" />
+                  <h3 className="text-xl font-medium mb-2">Loading jobs...</h3>
+                  <p className="text-muted-foreground">Fetching the latest opportunities from LinkedIn</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredJobs.length === 0 ? (
+                    <div className="bg-white border border-gray-200 rounded-xl p-12 text-center animate-fade-up">
+                      <Briefcase size={40} className="mx-auto text-muted-foreground mb-4" />
+                      <h3 className="text-xl font-medium mb-2">No jobs found</h3>
+                      <p className="text-muted-foreground mb-6">Try adjusting your filters to see more results.</p>
+                      <Button onClick={() => handleFilterChange({})}>
+                        Reset Filters
+                      </Button>
                     </div>
-                  ))
-                )}
-              </div>
+                  ) : (
+                    filteredJobs.map((job, index) => (
+                      <div key={job.id} className="animate-fade-up" style={{ animationDelay: `${index * 50}ms` }}>
+                        <JobCard job={job} />
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
               
-              {filteredJobs.length > 0 && (
+              {filteredJobs.length > 0 && hasMore && (
                 <div className="mt-8 flex justify-center animate-fade-up">
-                  <Button variant="outline" className="rounded-full px-8">
-                    Load more jobs
-                    <ArrowRight size={16} className="ml-2" />
+                  <Button 
+                    variant="outline" 
+                    className="rounded-full px-8"
+                    onClick={loadMoreJobs}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 size={16} className="mr-2 animate-spin" />
+                        Loading more...
+                      </>
+                    ) : (
+                      <>
+                        Load more jobs
+                        <ArrowRight size={16} className="ml-2" />
+                      </>
+                    )}
                   </Button>
                 </div>
               )}

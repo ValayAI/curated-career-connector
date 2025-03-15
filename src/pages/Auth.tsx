@@ -13,11 +13,11 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BriefcaseIcon, Mail, Lock, ArrowRight, LogIn, UserPlus, Github, Linkedin } from "lucide-react";
+import { BriefcaseIcon, Mail, Lock, ArrowRight, LogIn, UserPlus, Linkedin } from "lucide-react";
 import { toast } from "sonner";
 
 const Auth = () => {
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signInWithLinkedIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -52,10 +52,12 @@ const Auth = () => {
     }
   };
 
-  const handleSocialLogin = async (provider: 'google') => {
+  const handleSocialLogin = async (provider: 'google' | 'linkedin') => {
     try {
       if (provider === 'google') {
         await signInWithGoogle();
+      } else if (provider === 'linkedin') {
+        await signInWithLinkedIn();
       }
     } catch (error: any) {
       toast.error(error.message || "Social login failed");
@@ -130,7 +132,7 @@ const Auth = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button 
                     variant="outline" 
                     type="button" 
@@ -156,6 +158,15 @@ const Auth = () => {
                       />
                     </svg>
                     Google
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    type="button"
+                    onClick={() => handleSocialLogin('linkedin')}
+                    className="w-full"
+                  >
+                    <Linkedin className="mr-2 h-4 w-4 text-[#0077B5]" />
+                    LinkedIn
                   </Button>
                 </div>
               </CardContent>
@@ -211,7 +222,7 @@ const Auth = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <Button 
                     variant="outline" 
                     type="button"
@@ -237,6 +248,15 @@ const Auth = () => {
                       />
                     </svg>
                     Google
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    type="button"
+                    onClick={() => handleSocialLogin('linkedin')}
+                    className="w-full"
+                  >
+                    <Linkedin className="mr-2 h-4 w-4 text-[#0077B5]" />
+                    LinkedIn
                   </Button>
                 </div>
               </CardContent>

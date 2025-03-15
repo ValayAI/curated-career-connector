@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import JobCard from "@/components/JobCard";
@@ -44,7 +45,7 @@ const Jobs = () => {
       } else {
         const jobsData = response.data.data || [];
         
-        // Format the data to match our Job type
+        // Make sure job data includes all required fields
         const formattedJobs = jobsData.map((job: any) => ({
           ...job,
           // Ensure all required properties are present
@@ -53,7 +54,11 @@ const Jobs = () => {
           applicationRate: job.applicationRate || Math.floor(Math.random() * 40) + 50, // Random application rate between 50-90%
           connection: job.connection || { 
             type: ['None', 'Second', 'First', 'Alumni'][Math.floor(Math.random() * 4)] as ConnectionStrength
-          }
+          },
+          description: job.description || "No description provided",
+          responsibilities: job.responsibilities || ["Responsibility information not available"],
+          requirements: job.requirements || ["Requirement information not available"],
+          recruiterActivity: job.recruiterActivity || Math.floor(Math.random() * 10) + 1,
         }));
 
         if (pageNum === 1) {
@@ -109,7 +114,7 @@ const Jobs = () => {
               }
             }
           } else if (key === 'connectionStrength' && Array.isArray(value) && value.length > 0) {
-            // Handle connection type filter - Fix for TypeScript error
+            // Handle connection type filter - Fix: proper type casting
             const connectionStrengths = value as ConnectionStrength[]; // Explicitly cast to ConnectionStrength array
             if (!connectionStrengths.includes(job.connection.type)) {
               matches = false;
@@ -117,7 +122,7 @@ const Jobs = () => {
           } else if (Array.isArray(value) && value.length > 0) {
             // Handle array filters (position, experience, industry, type)
             const jobValue = job[key as keyof Job];
-            // Fix for TypeScript error - proper type cast
+            // Fix: proper type casting
             const typedValue = value as string[];
             if (jobValue && !typedValue.includes(jobValue as string)) {
               matches = false;

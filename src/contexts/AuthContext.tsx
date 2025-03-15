@@ -94,7 +94,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [navigate]);
 
-  // Protect routes - redirect to login if not authenticated
+  // REMOVED: Authentication protection for routes
+  // The following effect is commented out to bypass login requirement
+  /*
   useEffect(() => {
     if (!loading && !user) {
       const publicRoutes = ['/', '/auth', '/index'];
@@ -104,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
   }, [loading, user, location.pathname, navigate]);
+  */
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });

@@ -55,6 +55,7 @@ const Jobs = () => {
         
         if (responseData.error) {
           setError('API returned an error: ' + responseData.error);
+          toast.error('API error: ' + responseData.error);
         }
         
         // Make sure job data includes all required fields

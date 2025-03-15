@@ -1,3 +1,4 @@
+
 import { corsHeaders } from '../_shared/cors.ts'
 
 // This endpoint allows us to fetch job listings from the RapidAPI LinkedIn Job Search API
@@ -34,38 +35,37 @@ Deno.serve(async (req) => {
       console.log('Attempting to fetch jobs from RapidAPI LinkedIn job search API')
       
       // Prepare query parameters
-      let endpoint = "/active-jb-24h"
+      let endpoint = "/api/job/search" // Updated to correct endpoint structure
       
       // Add query parameters for job filtering (when available)
       const queryParams = new URLSearchParams();
       
+      queryParams.append('page', page.toString());
+      queryParams.append('per_page', limit.toString()); // Added per_page parameter
+      
       if (keywords) {
-        // Convert keywords to a suitable format if needed
-        queryParams.append('keywords', keywords);
+        queryParams.append('search', keywords);
       }
       
       if (location) {
         queryParams.append('location', location);
       }
       
-      // Add pagination if needed
-      if (page > 1) {
-        queryParams.append('page', page.toString());
-      }
+      // Always add these parameters for better results
+      queryParams.append('job_type', 'full_time');
+      queryParams.append('sort_by', 'recent');
       
-      // Append query parameters to endpoint if any exist
+      // Append query parameters to endpoint
       const queryString = queryParams.toString();
-      if (queryString) {
-        endpoint = `${endpoint}?${queryString}`;
-      }
+      endpoint = `${endpoint}?${queryString}`;
       
-      console.log(`Making request to: ${endpoint}`);
+      console.log(`Making request to RapidAPI: ${endpoint}`);
       
       // Make request to RapidAPI
-      const response = await fetch(`https://linkedin-job-search-api.p.rapidapi.com${endpoint}`, {
+      const response = await fetch(`https://jsearch.p.rapidapi.com${endpoint}`, {
         headers: {
-          'x-rapidapi-key': RAPIDAPI_KEY,
-          'x-rapidapi-host': 'linkedin-job-search-api.p.rapidapi.com'
+          'X-RapidAPI-Key': RAPIDAPI_KEY,
+          'X-RapidAPI-Host': 'jsearch.p.rapidapi.com' // Updated to correct host
         }
       });
 
@@ -76,19 +76,26 @@ Deno.serve(async (req) => {
       }
       
       const rapidApiData = await response.json();
-      console.log(`Received ${rapidApiData.length || 0} jobs from RapidAPI`);
+      console.log(`Received response from RapidAPI JSearch: `, rapidApiData);
+      
+      if (!rapidApiData.data || !Array.isArray(rapidApiData.data)) {
+        console.error('Invalid data format received from RapidAPI:', rapidApiData);
+        throw new Error('Invalid data format received from RapidAPI');
+      }
+      
+      console.log(`Received ${rapidApiData.data.length || 0} jobs from RapidAPI`);
       
       // Log a sample job to understand the structure
-      if (rapidApiData.length > 0) {
-        console.log('Sample job structure:', JSON.stringify(rapidApiData[0], null, 2));
+      if (rapidApiData.data.length > 0) {
+        console.log('Sample job structure:', JSON.stringify(rapidApiData.data[0], null, 2));
       }
       
       // Transform the API response to match our job data structure
-      const transformedJobs = transformRapidApiData(rapidApiData, limit);
+      const transformedJobs = transformRapidApiData(rapidApiData.data, limit);
       
       return new Response(
         JSON.stringify({
-          message: 'Using data from RapidAPI LinkedIn Job Search API',
+          message: 'Using data from RapidAPI JSearch API',
           data: transformedJobs
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -98,7 +105,7 @@ Deno.serve(async (req) => {
       // Fall back to sample data on API error
       return new Response(
         JSON.stringify({
-          message: 'Error with RapidAPI LinkedIn Job Search API, using sample data instead',
+          message: 'Error with RapidAPI JSearch API, using sample data instead',
           data: getSampleJobs(limit, keywords),
           error: apiError.message
         }),
@@ -119,7 +126,7 @@ Deno.serve(async (req) => {
   }
 })
 
-// Transform RapidAPI LinkedIn job search data to match our job data structure
+// Transform RapidAPI JSearch data to match our job data structure
 function transformRapidApiData(apiData: any[], limit = 10) {
   // Handle empty or invalid data
   if (!apiData || !Array.isArray(apiData) || apiData.length === 0) {
@@ -136,14 +143,16 @@ function transformRapidApiData(apiData: any[], limit = 10) {
     const experiences = ["Entry Level", "Mid Level", "Senior", "Executive"];
     
     return {
-      id: job.job_url || `rapid-${index + 1}`.padStart(10, '0'),
+      id: job.job_id || `rapid-${index + 1}`.padStart(10, '0'),
       title: job.job_title || 'Job Title Not Available',
-      company: job.company_name || 'Company Not Available',
-      location: job.location || 'Remote',
-      type: ["Remote", "Onsite", "Hybrid"][Math.floor(Math.random() * 3)], // Random job type
-      salary: job.salary_range || '$Not specified',
-      logo: job.company_logo_url || `https://images.unsplash.com/photo-1547658719-da2b51169166?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=64&w=64`,
-      position: job.job_category || 'Product Manager',
+      company: job.employer_name || 'Company Not Available',
+      location: job.job_city ? `${job.job_city}, ${job.job_state || job.job_country || ''}` : 'Remote',
+      type: job.job_is_remote ? "Remote" : ["Onsite", "Hybrid"][Math.floor(Math.random() * 2)],
+      salary: job.job_min_salary && job.job_max_salary 
+             ? `$${job.job_min_salary}-$${job.job_max_salary} ${job.job_salary_currency || 'USD'}`
+             : 'Salary not specified',
+      logo: job.employer_logo || `https://images.unsplash.com/photo-1547658719-da2b51169166?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=64&w=64`,
+      position: job.job_title?.includes('Manager') ? 'Product Manager' : 'Developer',
       experience: experiences[Math.floor(Math.random() * experiences.length)],
       industry: industries[Math.floor(Math.random() * industries.length)],
       connection: {
@@ -153,16 +162,16 @@ function transformRapidApiData(apiData: any[], limit = 10) {
       },
       applicationRate: Math.floor(Math.random() * 40) + 50, // Random rate between 50-90%
       featured: Math.random() > 0.7, // Randomly set some jobs as featured
-      posted: job.posted_date || new Date().toISOString(),
+      posted: job.job_posted_at_datetime_utc || new Date().toISOString(),
       description: job.job_description || 'No description available',
-      responsibilities: [
+      responsibilities: (job.job_highlights?.Responsibilities || [
         "Responsibility information not available",
         "Check job description for details"
-      ],
-      requirements: [
+      ]),
+      requirements: (job.job_highlights?.Qualifications || [
         "Requirement information not available",
         "Check job description for details"
-      ],
+      ]),
       recruiterActivity: Math.floor(Math.random() * 10) + 1,
     };
   });

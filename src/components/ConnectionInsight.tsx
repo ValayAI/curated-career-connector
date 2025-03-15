@@ -11,6 +11,9 @@ interface ConnectionInsightProps {
 }
 
 const ConnectionInsight: React.FC<ConnectionInsightProps> = ({ job }) => {
+  // Get company name, with fallback for when it's not available
+  const companyName = job.company || "This company";
+  
   if (job.connection.type === "None") {
     return (
       <Card className="p-6 bg-white/60 backdrop-blur-sm border-gray-200/70">
@@ -19,7 +22,7 @@ const ConnectionInsight: React.FC<ConnectionInsightProps> = ({ job }) => {
           <Badge connection={job.connection.type} />
         </div>
         <p className="text-muted-foreground mb-6">
-          You don't have any direct connections at {job.company}. Upgrade to ConnectLeads Premium to find potential common connections who might help you get referred.
+          You don't have any direct connections at {companyName}. Upgrade to ConnectLeads Premium to find potential common connections who might help you get referred.
         </p>
         <Button className="w-full">
           Unlock Premium Insights
@@ -44,7 +47,7 @@ const ConnectionInsight: React.FC<ConnectionInsightProps> = ({ job }) => {
           <div>
             <h4 className="font-medium">{job.connection.name}</h4>
             <p className="text-sm text-muted-foreground">
-              {job.connection.position} at {job.company}
+              {job.connection.position} at {companyName}
             </p>
             <p className="mt-2 text-sm">
               {job.connection.type === "First"

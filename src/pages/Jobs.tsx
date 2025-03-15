@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import JobCard from "@/components/JobCard";
@@ -17,6 +16,7 @@ const Jobs = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [apiSource, setApiSource] = useState<string>('');
 
   // Fetch jobs from LinkedIn API
   const fetchJobs = async (pageNum = 1) => {
@@ -42,16 +42,18 @@ const Jobs = () => {
           setFilteredJobs(localFilteredJobs);
         }
         setHasMore(false);
+        setApiSource('Local sample data');
       } else {
         const jobsData = response.data.data || [];
+        setApiSource(response.data.message || 'API data');
         
         // Make sure job data includes all required fields
         const formattedJobs = jobsData.map((job: any) => ({
           ...job,
           // Ensure all required properties are present
           id: job.id || `job-${Math.random().toString(36).substr(2, 9)}`,
-          featured: job.featured || Math.random() > 0.7, // Randomly set some jobs as featured
-          applicationRate: job.applicationRate || Math.floor(Math.random() * 40) + 50, // Random application rate between 50-90%
+          featured: job.featured ?? Math.random() > 0.7, // Randomly set some jobs as featured if not defined
+          applicationRate: job.applicationRate || Math.floor(Math.random() * 40) + 50, // Random application rate between 50-90% if not defined
           connection: job.connection || { 
             type: ['None', 'Second', 'First', 'Alumni'][Math.floor(Math.random() * 4)] as ConnectionStrength
           },
@@ -81,6 +83,7 @@ const Jobs = () => {
         setFilteredJobs(localFilteredJobs);
       }
       setHasMore(false);
+      setApiSource('Local sample data (error fallback)');
     } finally {
       setIsLoading(false);
     }
@@ -158,6 +161,11 @@ const Jobs = () => {
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Focus on quality over quantity with jobs that match your profile and have higher response rates.
             </p>
+            {apiSource && (
+              <div className="text-xs text-muted-foreground mt-2">
+                Source: {apiSource}
+              </div>
+            )}
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

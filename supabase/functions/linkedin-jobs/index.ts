@@ -1,8 +1,6 @@
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 import { corsHeaders } from '../_shared/cors.ts'
 
-// This endpoint allows us to fetch job listings from LinkedIn
+// This endpoint allows us to fetch job listings from LinkedIn and RapidAPI
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
@@ -14,25 +12,83 @@ Deno.serve(async (req) => {
     // Get request parameters from the body
     const { page = 1, limit = 10, keywords = '', location = '' } = await req.json()
     
-    // Get the LinkedIn API credentials from environment variables
-    const LINKEDIN_CLIENT_ID = Deno.env.get('LINKEDIN_CLIENT_ID')
-    const LINKEDIN_CLIENT_SECRET = Deno.env.get('LINKEDIN_CLIENT_SECRET')
-
     console.log('Received request for jobs with params:', { page, limit, keywords, location })
 
-    if (!LINKEDIN_CLIENT_ID || !LINKEDIN_CLIENT_SECRET) {
-      console.log('LinkedIn API credentials not configured, using sample data')
+    // Get the RapidAPI key from environment variables
+    const RAPIDAPI_KEY = Deno.env.get('RAPIDAPI_KEY')
+
+    if (!RAPIDAPI_KEY) {
+      console.log('RapidAPI key not configured, using sample data')
       
       // Return sample data if credentials are missing
       return new Response(
         JSON.stringify({
-          message: 'Using sample data as LinkedIn API credentials are not configured',
+          message: 'Using sample data as RapidAPI key is not configured',
           data: getSampleJobs(limit, keywords)
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    try {
+      console.log('Attempting to fetch jobs from RapidAPI LinkedIn job search')
+      
+      // Prepare query parameters
+      let endpoint = "/active-jb-24h"
+      
+      // Add query parameters for job filtering (when available)
+      const queryParams = new URLSearchParams();
+      
+      if (keywords) {
+        // Convert keywords to a suitable format if needed
+        queryParams.append('keywords', keywords);
+      }
+      
+      if (location) {
+        queryParams.append('location', location);
+      }
+      
+      // Add pagination if needed
+      if (page > 1) {
+        queryParams.append('page', page.toString());
+      }
+      
+      // Append query parameters to endpoint if any exist
+      const queryString = queryParams.toString();
+      if (queryString) {
+        endpoint = `${endpoint}?${queryString}`;
+      }
+      
+      // Make request to RapidAPI
+      const response = await fetch(`https://linkedin-job-search-api.p.rapidapi.com${endpoint}`, {
+        headers: {
+          'x-rapidapi-key': RAPIDAPI_KEY,
+          'x-rapidapi-host': 'linkedin-job-search-api.p.rapidapi.com'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`RapidAPI request failed with status ${response.status}`);
+      }
+      
+      const rapidApiData = await response.json();
+      console.log(`Received ${rapidApiData.length || 0} jobs from RapidAPI`);
+      
+      // Transform the API response to match our job data structure
+      const transformedJobs = transformRapidApiData(rapidApiData, limit);
+      
+      return new Response(
+        JSON.stringify({
+          message: 'Using live data from RapidAPI',
+          data: transformedJobs
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    } catch (apiError) {
+      console.error('Error fetching from RapidAPI:', apiError);
+      // Fall back to sample data on API error
+    }
+    
     // Import sample job data from the database if available
     try {
       const { supabaseClient } = await import('../_shared/supabaseClient.ts')
@@ -92,6 +148,55 @@ Deno.serve(async (req) => {
     )
   }
 })
+
+// Transform RapidAPI LinkedIn data to match our job data structure
+function transformRapidApiData(apiData: any[], limit = 10) {
+  // Handle empty or invalid data
+  if (!apiData || !Array.isArray(apiData) || apiData.length === 0) {
+    console.warn('No data received from RapidAPI or invalid data format');
+    return [];
+  }
+
+  // Map the API data to our job structure
+  return apiData.slice(0, limit).map((job: any, index: number) => {
+    // Generate random values for fields not provided by the API
+    const connectionTypes: ["None", "Second", "First", "Alumni"] = ["None", "Second", "First", "Alumni"];
+    const connectionType = connectionTypes[Math.floor(Math.random() * connectionTypes.length)];
+    const industries = ["Technology", "Healthcare", "Finance", "Retail", "Manufacturing", "Education", "Media"];
+    const experiences = ["Entry Level", "Mid Level", "Senior", "Executive"];
+    
+    return {
+      id: job.job_url || `rapid-${index + 1}`.padStart(10, '0'),
+      title: job.job_title || 'Job Title Not Available',
+      company: job.company_name || 'Company Not Available',
+      location: job.location || 'Remote',
+      type: ["Remote", "Onsite", "Hybrid"][Math.floor(Math.random() * 3)], // Random job type
+      salary: job.salary_range || '$Not specified',
+      logo: job.company_logo_url || `https://images.unsplash.com/photo-1547658719-da2b51169166?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=80&h=64&w=64`,
+      position: job.job_category || 'Product Manager',
+      experience: experiences[Math.floor(Math.random() * experiences.length)],
+      industry: industries[Math.floor(Math.random() * industries.length)],
+      connection: {
+        type: connectionType as any,
+        name: connectionType !== 'None' ? `Connection ${index}` : undefined,
+        position: connectionType !== 'None' ? 'Team Member' : undefined
+      },
+      applicationRate: Math.floor(Math.random() * 40) + 50, // Random rate between 50-90%
+      featured: Math.random() > 0.7, // Randomly set some jobs as featured
+      posted: job.posted_date || new Date().toISOString(),
+      description: job.job_description || 'No description available',
+      responsibilities: [
+        "Responsibility information not available",
+        "Check job description for details"
+      ],
+      requirements: [
+        "Requirement information not available",
+        "Check job description for details"
+      ],
+      recruiterActivity: Math.floor(Math.random() * 10) + 1,
+    };
+  });
+}
 
 // Sample jobs data function to use when LinkedIn API is not available
 function getSampleJobs(limit = 10, keywordFilter = '') {

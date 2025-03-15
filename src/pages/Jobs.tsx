@@ -112,13 +112,14 @@ const Jobs = () => {
             }
           } else if (key === 'connectionStrength' && Array.isArray(value) && value.length > 0) {
             // Handle connection type filter - Fix for TypeScript error on line 115
-            if (!value.includes(job.connection.type as any)) {
+            const connectionStrengths = value as ConnectionStrength[]; // Explicitly cast to ConnectionStrength array
+            if (!connectionStrengths.includes(job.connection.type)) {
               matches = false;
             }
           } else if (Array.isArray(value) && value.length > 0) {
             // Handle array filters (position, experience, industry, type)
             const jobValue = job[key as keyof Job];
-            // Fix for TypeScript error on line 121 - proper type cast
+            // Fix for TypeScript error - proper type cast
             const typedValue = value as Array<string>;
             if (jobValue && !typedValue.includes(jobValue as string)) {
               matches = false;

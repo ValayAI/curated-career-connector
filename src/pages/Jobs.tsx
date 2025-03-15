@@ -5,7 +5,7 @@ import JobFilter from "@/components/JobFilter";
 import { Filter, Job, ConnectionStrength } from "@/lib/types";
 import { filterJobs } from "@/lib/data";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Briefcase, Loader2 } from "lucide-react";
+import { ArrowRight, Briefcase, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -17,10 +17,12 @@ const Jobs = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [apiSource, setApiSource] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch jobs from LinkedIn API
   const fetchJobs = async (pageNum = 1) => {
     setIsLoading(true);
+    setError(null);
     
     try {
       const response = await supabase.functions.invoke('linkedin-jobs', {
@@ -35,6 +37,8 @@ const Jobs = () => {
       if (response.error) {
         console.error('Error fetching jobs:', response.error);
         toast.error('Failed to load jobs. Using sample data instead.');
+        setError('API Error: ' + response.error.message);
+        
         // If we can't get jobs from the API, use the local sample data
         const localFilteredJobs = filterJobs(activeFilter);
         if (pageNum === 1) {
@@ -44,8 +48,13 @@ const Jobs = () => {
         setHasMore(false);
         setApiSource('Local sample data');
       } else {
-        const jobsData = response.data.data || [];
-        setApiSource(response.data.message || 'API data');
+        const responseData = response.data;
+        const jobsData = responseData.data || [];
+        setApiSource(responseData.message || 'API data');
+        
+        if (responseData.error) {
+          setError('API returned an error: ' + responseData.error);
+        }
         
         // Make sure job data includes all required fields
         const formattedJobs = jobsData.map((job: any) => ({
@@ -76,6 +85,8 @@ const Jobs = () => {
     } catch (error) {
       console.error('Error fetching jobs:', error);
       toast.error('Failed to load jobs');
+      setError('Failed to load jobs: ' + (error instanceof Error ? error.message : String(error)));
+      
       // If we can't get jobs from the API, use the local sample data
       const localFilteredJobs = filterJobs(activeFilter);
       if (pageNum === 1) {
@@ -162,8 +173,14 @@ const Jobs = () => {
               Focus on quality over quantity with jobs that match your profile and have higher response rates.
             </p>
             {apiSource && (
-              <div className="text-xs text-muted-foreground mt-2">
-                Source: {apiSource}
+              <div className="text-xs text-muted-foreground mt-2 flex items-center justify-center">
+                <span>Source: {apiSource}</span>
+                {error && (
+                  <div className="ml-2 flex items-center text-destructive">
+                    <AlertCircle size={12} className="mr-1" />
+                    <span className="text-xs truncate max-w-[300px]" title={error}>Error detected</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -171,7 +188,7 @@ const Jobs = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-1 animate-fade-in">
               <div className="sticky top-20">
-                <JobFilter onFilterChange={handleFilterChange} />
+                <JobFilter onFilterChange={setActiveFilter} />
               </div>
             </div>
             
@@ -207,7 +224,7 @@ const Jobs = () => {
                       <Briefcase size={40} className="mx-auto text-muted-foreground mb-4" />
                       <h3 className="text-xl font-medium mb-2">No jobs found</h3>
                       <p className="text-muted-foreground mb-6">Try adjusting your filters to see more results.</p>
-                      <Button onClick={() => handleFilterChange({})}>
+                      <Button onClick={() => setActiveFilter({})}>
                         Reset Filters
                       </Button>
                     </div>

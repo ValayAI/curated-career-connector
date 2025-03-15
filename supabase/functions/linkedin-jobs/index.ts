@@ -59,6 +59,8 @@ Deno.serve(async (req) => {
         endpoint = `${endpoint}?${queryString}`;
       }
       
+      console.log(`Making request to: ${endpoint}`);
+      
       // Make request to RapidAPI
       const response = await fetch(`https://linkedin-job-search-api.p.rapidapi.com${endpoint}`, {
         headers: {
@@ -68,11 +70,17 @@ Deno.serve(async (req) => {
       });
 
       if (!response.ok) {
+        console.error(`RapidAPI request failed with status ${response.status}: ${await response.text()}`);
         throw new Error(`RapidAPI request failed with status ${response.status}`);
       }
       
       const rapidApiData = await response.json();
       console.log(`Received ${rapidApiData.length || 0} jobs from RapidAPI`);
+      
+      // Log a sample job to understand the structure
+      if (rapidApiData.length > 0) {
+        console.log('Sample job structure:', JSON.stringify(rapidApiData[0], null, 2));
+      }
       
       // Transform the API response to match our job data structure
       const transformedJobs = transformRapidApiData(rapidApiData, limit);
@@ -87,55 +95,15 @@ Deno.serve(async (req) => {
     } catch (apiError) {
       console.error('Error fetching from RapidAPI:', apiError);
       // Fall back to sample data on API error
+      return new Response(
+        JSON.stringify({
+          message: 'Error with RapidAPI, using sample data instead',
+          data: getSampleJobs(limit, keywords),
+          error: apiError.message
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-    
-    // Import sample job data from the database if available
-    try {
-      const { supabaseClient } = await import('../_shared/supabaseClient.ts')
-      
-      console.log('Attempting to fetch jobs from database')
-      
-      // Get sample data from our database if available
-      const { data, error } = await supabaseClient
-        .from('jobs')
-        .select('*')
-        .limit(limit)
-        .range((page - 1) * limit, page * limit - 1)
-      
-      if (error) {
-        console.error('Error fetching sample data from database:', error)
-        throw new Error('Database fetch failed')
-      }
-      
-      if (data && data.length > 0) {
-        console.log(`Returning ${data.length} jobs from database`)
-        return new Response(
-          JSON.stringify({
-            message: 'Using database sample data',
-            data: data
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      } else {
-        console.log('No jobs found in database, using hardcoded sample data')
-      }
-    } catch (dbError) {
-      console.error('Database connection error:', dbError)
-      // Continue to the hardcoded sample data
-    }
-    
-    // If we reach here, use hardcoded sample data
-    const sampleData = getSampleJobs(limit, keywords)
-    console.log(`Returning ${sampleData.length} hardcoded sample jobs`)
-    
-    return new Response(
-      JSON.stringify({
-        message: 'Using hardcoded sample data',
-        data: sampleData
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-    
   } catch (error) {
     console.error('Error in LinkedIn jobs function:', error)
     
